@@ -115,7 +115,6 @@ const getLocalDateString = () => {
   return localISOTime;
 };
 
-// Helper to get ISO Week number
 const getWeekNumber = (d) => {
   d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -124,7 +123,6 @@ const getWeekNumber = (d) => {
   return weekNo;
 };
 
-// Helper to generate a period key (e.g., "2024-01-01" or "2024-W1" or "2024-01")
 const getPeriodKey = (dateStr, frequency) => {
   const d = new Date(dateStr);
   if (frequency === 'weekly') {
@@ -133,18 +131,12 @@ const getPeriodKey = (dateStr, frequency) => {
   if (frequency === 'monthly') {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   }
-  return dateStr; // daily
+  return dateStr; 
 };
 
-// Advanced Streak Calculation (Supports Frequency)
 const calculateStreak = (dates, frequency = 'daily') => {
   if (!dates || dates.length === 0) return 0;
-  
-  // Convert all dates to Period Keys based on frequency
   const periods = [...new Set(dates.map(d => getPeriodKey(d, frequency)))].sort().reverse();
-  
-  const today = new Date();
-  const currentPeriodKey = getPeriodKey(getLocalDateString(), frequency);
   
   if (periods.length === 0) return 0;
 
@@ -157,15 +149,7 @@ const calculateStreak = (dates, frequency = 'daily') => {
       const todayStr = getLocalDateString();
       const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
       
-      // If last check-in was not today or yesterday, streak is broken (0 for display purposes of 'current streak')
-      // However, to keep it friendly, let's just return the counted consecutive days from the last entry backwards.
-      // But if we want to show "Current Active Streak", it should be 0 if broken. 
-      // Let's stick to calculating the streak of the latest run.
-      
-      if (last !== todayStr && last !== yesterday) {
-          // If purely strict, return 0. Let's return 0 to encourage consistency.
-          return 0; 
-      }
+      if (last !== todayStr && last !== yesterday) return 0;
 
       for (let i = 1; i < sortedDates.length; i++) {
         const prev = new Date(sortedDates[i]);
@@ -180,7 +164,6 @@ const calculateStreak = (dates, frequency = 'daily') => {
       }
       return tempStreak;
   } else {
-      // For Weekly/Monthly, simplified to total count of unique periods for robustness in this demo
       return periods.length; 
   }
 };
@@ -274,7 +257,7 @@ const HistoryCalendar = ({ goal, onClose, onToggleDate }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-slate-900">{goal.title}</h3>
@@ -322,13 +305,13 @@ const LevelInfoModal = ({ onClose }) => {
   ];
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-0 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-        <div className="bg-indigo-600 p-6 text-white flex justify-between items-start relative overflow-hidden">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-0 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
+        <div className="bg-indigo-600 p-6 text-white flex justify-between items-start relative overflow-hidden shrink-0">
            <div className="relative z-10">
               <h3 className="text-xl font-bold flex items-center gap-2">
                 <Award className="w-6 h-6 text-amber-300" />
-                ระบบเลเวลและยศ (Level & Ranks)
+                ระบบเลเวลและยศ
               </h3>
               <p className="text-indigo-100 text-sm mt-1 opacity-90">คู่มือการพัฒนาตนเองสู่ความสำเร็จ</p>
            </div>
@@ -692,230 +675,163 @@ export default function FocusYearApp() {
   const ClassIcon = characterClass.icon;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-indigo-100">
+    <div className="fixed inset-0 flex flex-col bg-slate-50 text-slate-800 font-sans selection:bg-indigo-100 select-none touch-manipulation overflow-hidden">
       
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <KebVelLogo />
-            <span className="font-black text-2xl tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 hidden sm:inline">
-              Keb Vel
-            </span>
-            <span className="font-black text-xl tracking-tight text-slate-900 sm:hidden">Keb Vel</span>
+      {/* Header (Fixed) */}
+      <header className="bg-white border-b border-slate-200 flex-none z-50 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="scale-90"><KebVelLogo /></div>
+            <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">Keb Vel</span>
           </div>
           
-          <div className="flex items-center gap-4">
-             {/* Year Selector */}
-             <div className="flex items-center bg-slate-100 rounded-lg p-1">
+          <div className="flex items-center gap-2">
+             <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
                 <button 
                   onClick={() => setSelectedYear(selectedYear - 1)}
-                  className="p-1 hover:bg-white rounded-md text-slate-500 transition-colors"
+                  className="p-1.5 hover:bg-white rounded-md text-slate-500 transition-colors"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
-                <span className="px-3 text-sm font-bold text-slate-700 min-w-[60px] text-center">{selectedYear}</span>
+                <span className="px-2 text-xs font-bold text-slate-700 min-w-[40px] text-center">{selectedYear}</span>
                 <button 
                   onClick={() => setSelectedYear(selectedYear + 1)}
                   disabled={selectedYear >= currentYear}
-                  className={`p-1 rounded-md transition-colors ${selectedYear >= currentYear ? 'text-slate-300 cursor-not-allowed' : 'hover:bg-white text-slate-500'}`}
+                  className={`p-1.5 rounded-md transition-colors ${selectedYear >= currentYear ? 'text-slate-300' : 'hover:bg-white text-slate-500'}`}
                 >
-                  <ChevronRight className="w-4 h-4" />
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
-             </div>
-
-             <div className="text-sm text-slate-500 hidden sm:block">
-               {new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short' })}
              </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content (Scrollable) */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-20 w-full max-w-lg mx-auto">
         
-        {/* Navigation Tabs */}
-        <div className="flex space-x-1 bg-slate-100 p-1 rounded-xl mb-8 w-fit mx-auto sm:mx-0 overflow-x-auto">
+        {/* Navigation Tabs (Sticky within scroll or fixed top? Let's keep distinct) */}
+        <div className="flex gap-1 bg-white border border-slate-200 p-1 rounded-xl mb-6 shadow-sm sticky top-0 z-40 mx-auto w-full">
           {[
             { id: 'dashboard', label: 'ภาพรวม', icon: Layout },
-            { id: 'goals', label: 'รายการเป้าหมาย', icon: List },
-            { id: 'analytics', label: 'สถานะตัวละคร', icon: Swords }
+            { id: 'goals', label: 'เป้าหมาย', icon: List },
+            { id: 'analytics', label: 'ตัวละคร', icon: Swords }
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`
-                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap
+                flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all duration-200
                 ${activeTab === tab.id 
-                  ? 'bg-white text-indigo-600 shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'}
+                  ? 'bg-indigo-50 text-indigo-600 shadow-sm ring-1 ring-indigo-100' 
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}
               `}
             >
-              <tab.icon className="w-4 h-4" />
+              <tab.icon className="w-3.5 h-3.5" />
               {tab.label}
             </button>
           ))}
         </div>
 
-        {selectedYear !== currentYear && (
-           <div className="mb-6 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl flex items-center gap-3">
-              <History className="w-5 h-5 text-amber-600" />
-              <p className="text-sm font-medium">คุณกำลังดูข้อมูลย้อนหลังของปี <strong>{selectedYear}</strong> ข้อมูลสถิติจะอ้างอิงจากปีนี้เท่านั้น</p>
-           </div>
-        )}
-
-        {/* --- DASHBOARD VIEW --- */}
+        {/* Views */}
         {activeTab === 'dashboard' && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Greeting */}
-            <div className="flex justify-between items-end">
+          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex justify-between items-end px-1">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">
+                <h1 className="text-xl font-bold text-slate-900">
                    {selectedYear === currentYear ? 'สวัสดีครับ 🚀' : `บันทึกปี ${selectedYear}`}
                 </h1>
-                <p className="text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 mt-0.5">
                   {selectedYear === currentYear 
-                    ? <span>วันนี้คุณทำสำเร็จไปแล้ว <span className="text-indigo-600 font-bold">{completedToday}/{totalGoals}</span> รายการ</span>
-                    : <span>สรุปภาพรวมความสำเร็จในปีนี้</span>
+                    ? <span>วันนี้สำเร็จไปแล้ว <span className="text-indigo-600 font-bold">{completedToday}/{totalGoals}</span></span>
+                    : <span>สรุปภาพรวม</span>
                   }
                 </p>
               </div>
-              {selectedYear === currentYear && (
-                <button 
-                  onClick={() => setShowAddModal(true)}
-                  className="hidden sm:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm shadow-indigo-200"
-                >
-                  <Plus className="w-4 h-4" /> เพิ่มเป้าหมาย
-                </button>
-              )}
             </div>
 
-            {/* Daily Quote Card */}
-            {selectedYear === currentYear && (
-              <div className="bg-gradient-to-r from-indigo-50 to-white border border-indigo-100 rounded-xl p-4 flex items-start gap-4 shadow-sm">
-                <div className="bg-white p-2.5 rounded-full shadow-sm border border-indigo-50">
-                  <Quote className="w-5 h-5 text-indigo-500 fill-indigo-100" />
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <Card className="p-3.5 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white border-none shadow-indigo-200">
+                <div className="flex justify-between items-start mb-2">
+                   <p className="text-[10px] font-bold uppercase opacity-80">วันนี้</p>
+                   <TrendingUp className="w-3.5 h-3.5 opacity-80" />
                 </div>
-                <div>
-                  <p className="text-slate-800 font-medium italic text-lg leading-relaxed">"{dailyQuote}"</p>
-                  <div className="flex items-center gap-2 mt-1">
-                     <div className="h-0.5 w-6 bg-indigo-300 rounded-full"></div>
-                     <p className="text-indigo-400 text-xs font-semibold uppercase tracking-wider">Daily Motivation</p>
-                  </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-black">{todayCompletionRate}%</span>
                 </div>
-              </div>
-            )}
-
-            {/* Overall Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card className="p-4">
-                <p className="text-xs font-medium text-slate-500 uppercase">
-                   {selectedYear === currentYear ? 'วันนี้ (Today)' : 'เฉลี่ยต่อวัน'}
-                </p>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-slate-900">{todayCompletionRate}%</span>
+                <div className="w-full bg-black/20 rounded-full h-1.5 mt-2">
+                   <div className="h-1.5 bg-white/90 rounded-full" style={{width: `${todayCompletionRate}%`}}></div>
                 </div>
-                <ProgressBar current={todayCompletionRate} total={100} colorClass="bg-indigo-500" />
               </Card>
-              <Card className="p-4">
-                <p className="text-xs font-medium text-slate-500 uppercase">
-                  {selectedYear === currentYear ? 'สัปดาห์นี้ (Weekly)' : 'เฉลี่ยรายปี'}
-                </p>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-3xl font-bold text-slate-900">{dashboardStats.weeklyRate}%</span>
+              <Card className="p-3.5 bg-white">
+                 <div className="flex justify-between items-start mb-2">
+                   <p className="text-[10px] font-bold text-slate-400 uppercase">Streak สูงสุด</p>
+                   <Flame className="w-3.5 h-3.5 text-amber-500" />
                 </div>
-                <ProgressBar current={dashboardStats.weeklyRate} total={100} colorClass="bg-emerald-500" />
-              </Card>
-              <Card className="p-4">
-                 <p className="text-xs font-medium text-slate-500 uppercase">
-                    {selectedYear === currentYear ? 'เดือนนี้ (Monthly)' : 'เฉลี่ยรายปี'}
-                 </p>
-                 <div className="mt-2 flex items-baseline gap-2">
-                   <span className="text-3xl font-bold text-slate-900">{dashboardStats.monthlyRate}%</span>
-                 </div>
-                 <ProgressBar current={dashboardStats.monthlyRate} total={100} colorClass="bg-amber-500" />
-              </Card>
-              <Card className="p-4 flex flex-col justify-center items-center bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none">
-                 <Flame className="w-8 h-8 mb-1 text-amber-300" />
-                 <span className="text-2xl font-bold">
+                <span className="text-2xl font-black text-slate-900">
                     {Math.max(...filteredResolutions.map(r => r.yearSpecificStreak), 0)}
                  </span>
-                 <span className="text-xs text-indigo-100">Best Streak ({selectedYear})</span>
+                 <p className="text-[10px] text-slate-400">วันติดกัน</p>
               </Card>
             </div>
 
-            {/* Daily Check-in List */}
-            <div className="mt-8">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <CalendarIcon className="w-5 h-5 text-indigo-500" />
-                  {selectedYear === currentYear ? 'รายการสิ่งที่ต้องทำ (To-Do List)' : 'สรุปรายการของปีนี้'}
+            {/* List */}
+            <div>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                  <CalendarIcon className="w-4 h-4 text-indigo-500" />
+                  To-Do List
                 </h2>
+                {selectedYear === currentYear && (
+                  <button onClick={() => setShowAddModal(true)} className="text-indigo-600 p-1 rounded-full hover:bg-indigo-50"><Plus className="w-4 h-4" /></button>
+                )}
               </div>
               
-              <div className="grid grid-cols-1 gap-3">
+              <div className="space-y-2.5 pb-20">
                 {filteredResolutions.map((res) => {
                   const isDone = isGoalCompletedForToday(res);
-                  const freqColor = res.frequency === 'weekly' ? 'bg-amber-100 text-amber-700' : res.frequency === 'monthly' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600';
+                  const freqColor = res.frequency === 'weekly' ? 'bg-amber-50 text-amber-700' : res.frequency === 'monthly' ? 'bg-purple-50 text-purple-700' : 'bg-slate-50 text-slate-600';
                   const freqLabel = res.frequency === 'weekly' ? 'รายสัปดาห์' : res.frequency === 'monthly' ? 'รายเดือน' : 'รายวัน';
                   
                   return (
                     <div 
                       key={res.id}
+                      onClick={() => {
+                        if (selectedYear === currentYear) toggleCheckIn(res.id);
+                      }}
                       className={`
-                        group relative flex items-center p-4 rounded-xl border transition-all duration-200
+                        relative flex items-center p-3.5 rounded-xl border transition-all active:scale-[0.98] duration-150
                         ${isDone 
-                          ? 'bg-indigo-50/50 border-indigo-200 shadow-none' 
-                          : 'bg-white border-slate-200 shadow-sm hover:border-indigo-300 hover:shadow-md'}
+                          ? 'bg-indigo-50/40 border-indigo-200 shadow-none' 
+                          : 'bg-white border-slate-200 shadow-sm'}
                       `}
                     >
-                      <div 
-                         onClick={(e) => {
-                            if (selectedYear !== currentYear) return;
-                            toggleCheckIn(res.id);
-                         }}
-                         className={`
-                           flex-shrink-0 w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-colors
-                           ${selectedYear !== currentYear ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
-                           ${isDone ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 hover:border-indigo-400'}
+                      <div className={`
+                           flex-shrink-0 w-5 h-5 rounded-full border-2 mr-3.5 flex items-center justify-center transition-colors
+                           ${isDone ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300'}
                          `}
                       >
-                        {isDone && <CheckCircle className="w-4 h-4 text-white" />}
+                        {isDone && <CheckCircle className="w-3.5 h-3.5 text-white" />}
                       </div>
                       
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                           <div>
-                              <h3 className={`font-medium ${isDone ? 'text-indigo-900 line-through opacity-70' : 'text-slate-900'}`}>
-                                {res.title}
-                              </h3>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${freqColor}`}>
-                                   {freqLabel}
-                                </span>
-                                <CategoryBadge category={res.category} />
-                                {res.yearSpecificStreak > 1 && (
-                                  <span className="text-xs text-amber-600 flex items-center font-medium">
-                                    <Flame className="w-3 h-3 mr-0.5" /> 
-                                    {res.yearSpecificStreak} {res.frequency === 'weekly' ? 'วีค' : res.frequency === 'monthly' ? 'เดือน' : 'วัน'}
-                                  </span>
-                                )}
-                              </div>
-                           </div>
-                           
-                           <div className="text-right hidden sm:block">
-                              <p className="text-xs text-slate-400">สะสมปี {selectedYear}</p>
-                              <p className="text-sm font-bold text-slate-700">{res.yearSpecificCompleted} ครั้ง</p>
-                           </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1">
+                           <h3 className={`font-medium text-sm truncate pr-2 ${isDone ? 'text-indigo-900 line-through opacity-60' : 'text-slate-900'}`}>
+                             {res.title}
+                           </h3>
+                           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 ${freqColor}`}>
+                              {freqLabel}
+                           </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <CategoryBadge category={res.category} />
+                           {res.yearSpecificStreak > 1 && (
+                              <span className="text-[10px] text-amber-600 font-bold flex items-center">
+                                <Flame className="w-2.5 h-2.5 mr-0.5" /> {res.yearSpecificStreak}
+                              </span>
+                           )}
                         </div>
                       </div>
-
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setSelectedGoalHistory(res); }}
-                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors ml-2"
-                        title="ดูประวัติและแก้ไขย้อนหลัง"
-                      >
-                        <CalendarIcon className="w-5 h-5" />
-                      </button>
                     </div>
                   );
                 })}
@@ -924,52 +840,134 @@ export default function FocusYearApp() {
           </div>
         )}
 
-        {/* --- GOALS LIST VIEW --- */}
+        {/* --- ANALYTICS VIEW --- */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 pb-20">
+             
+             {/* Character Card */}
+             <Card className="bg-slate-900 text-white border-slate-800 shadow-xl overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/20 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl -ml-10 -mb-10"></div>
+
+                <div className="relative z-10 p-5">
+                  <div className="flex items-center gap-4 mb-4">
+                     <div className="relative" onClick={() => setShowLevelModal(true)}>
+                        <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg border-2 border-amber-200 transform rotate-3">
+                           <Crown className="w-8 h-8 text-white drop-shadow-md -rotate-3" />
+                        </div>
+                        <div className="absolute -bottom-2 -right-2 bg-slate-800 text-amber-400 border border-amber-500/50 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                          LVL {currentLevel}
+                        </div>
+                     </div>
+                     
+                     <div className="flex-1">
+                       <div className="flex items-center gap-1.5 mb-0.5">
+                         <h3 className="text-xl font-black tracking-tight text-white">
+                           {getRankName(currentLevel).split(" ")[0]}
+                         </h3>
+                         <Info onClick={() => setShowLevelModal(true)} className="w-3.5 h-3.5 text-slate-400" />
+                       </div>
+                       <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border border-white/20 bg-white/10`}>
+                          <ClassIcon className="w-3 h-3 text-indigo-300" />
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-indigo-100">{characterClass.name.split(" ")[0]}</span>
+                       </div>
+                     </div>
+                  </div>
+
+                  <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase">
+                          <span>EXP: {grandTotalCompleted}</span>
+                          <span>Next: {xpToNext}</span>
+                      </div>
+                      <div className="h-2.5 bg-slate-800 rounded-full border border-slate-700 overflow-hidden">
+                          <div 
+                              className="h-full bg-gradient-to-r from-indigo-500 via-violet-500 to-amber-500"
+                              style={{ width: `${levelProgress}%` }}
+                          ></div>
+                      </div>
+                  </div>
+                </div>
+             </Card>
+
+             {/* Radar Chart */}
+             <div className="h-64 -mx-4">
+                <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={categoryStats}>
+                        <PolarGrid stroke="#e2e8f0" />
+                        <PolarAngleAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 700 }} />
+                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                        <Radar
+                            name="Performance"
+                            dataKey="rate"
+                            stroke="#6366f1"
+                            strokeWidth={2}
+                            fill="#818cf8"
+                            fillOpacity={0.4}
+                        />
+                    </RadarChart>
+                </ResponsiveContainer>
+             </div>
+
+             {/* Skills List */}
+             <div className="space-y-3">
+                <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Scroll className="w-4 h-4 text-indigo-500" />
+                    Skill Proficiency
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                    {categoryStats.map((cat) => (
+                        <div key={cat.name} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                            <div className="flex justify-between text-xs mb-1.5">
+                                <span className="font-bold text-slate-700 flex items-center gap-1.5">
+                                  <span className={`w-1.5 h-1.5 rounded-full ${cat.styles.bg.replace('bg-', 'bg-').replace('100', '500')}`}></span>
+                                  {cat.name}
+                                </span>
+                                <span className="font-mono text-slate-400">{cat.rate}%</span>
+                            </div>
+                            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full rounded-full transition-all duration-1000 ease-out"
+                                    style={{ width: `${cat.rate}%`, backgroundColor: cat.styles.hex }}
+                                ></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+             </div>
+          </div>
+        )}
+
+        {/* --- GOALS VIEW --- */}
         {activeTab === 'goals' && (
-          <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-900">จัดการเป้าหมาย</h2>
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 pb-20">
+            <div className="flex justify-between items-center px-1">
+              <h2 className="text-lg font-bold text-slate-900">จัดการเป้าหมาย</h2>
               {selectedYear === currentYear && (
                 <button 
                   onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-sm shadow-indigo-200"
                 >
-                  <Plus className="w-4 h-4" /> เพิ่มใหม่
+                  <Plus className="w-3.5 h-3.5" /> เพิ่ม
                 </button>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3">
               {filteredResolutions.map((res) => (
-                <Card key={res.id} className="p-5 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-3">
+                <Card key={res.id} className="p-4 relative overflow-hidden">
+                  <div className="flex justify-between items-start mb-2 relative z-10">
+                    <CategoryBadge category={res.category} />
                     <div className="flex gap-2">
-                       <CategoryBadge category={res.category} />
-                       <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-md font-medium">
-                          {res.frequency === 'weekly' ? 'รายสัปดาห์' : res.frequency === 'monthly' ? 'รายเดือน' : 'รายวัน'}
-                       </span>
-                    </div>
-                    <div className="flex gap-1">
-                      <button 
-                         onClick={() => setSelectedGoalHistory(res)}
-                         className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
-                      >
-                        <CalendarIcon className="w-4 h-4" />
-                      </button>
-                      {selectedYear === currentYear && (
-                        <button 
-                          onClick={() => handleDelete(res.id)} 
-                          className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-md transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
+                        <button onClick={() => setSelectedGoalHistory(res)} className="text-slate-400 p-1"><CalendarIcon className="w-4 h-4"/></button>
+                        {selectedYear === currentYear && (
+                            <button onClick={() => handleDelete(res.id)} className="text-slate-400 p-1 hover:text-red-500"><Trash2 className="w-4 h-4"/></button>
+                        )}
                     </div>
                   </div>
-                  <h3 className="font-semibold text-lg text-slate-900 mb-1">{res.title}</h3>
-                  <div className="flex items-center justify-between text-sm text-slate-500 mb-4">
-                    <span>เป้าหมายปีนี้: {res.targetDays} ครั้ง</span>
-                    <span>สำเร็จ: {res.yearSpecificCompleted} ครั้ง</span>
+                  <h3 className="font-bold text-slate-900 mb-1 relative z-10">{res.title}</h3>
+                  <div className="flex justify-between text-xs text-slate-500 mb-3 relative z-10">
+                    <span>{res.frequency === 'weekly' ? 'เป้าหมายรายสัปดาห์' : 'เป้าหมายรายวัน'}</span>
+                    <span>{res.yearSpecificCompleted} / {res.targetDays}</span>
                   </div>
                   <ProgressBar current={res.yearSpecificCompleted} total={res.targetDays} colorClass="bg-indigo-600" />
                 </Card>
@@ -978,281 +976,82 @@ export default function FocusYearApp() {
           </div>
         )}
 
-        {/* --- ANALYTICS VIEW --- */}
-        {activeTab === 'analytics' && (
-          <div className="space-y-6 animate-in fade-in duration-500">
-             
-             {/* Character Banner */}
-             <Card className="p-6 bg-slate-900 text-white border-slate-800 shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none"></div>
-
-                <div className="relative z-10">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="flex items-center gap-5">
-                       <div className="relative cursor-pointer hover:scale-105 transition-transform" onClick={() => setShowLevelModal(true)}>
-                          <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg border-2 border-amber-200 transform rotate-3">
-                             <Crown className="w-12 h-12 text-white drop-shadow-md -rotate-3" />
-                          </div>
-                          <div className="absolute -bottom-3 -right-3 bg-slate-800 text-amber-400 border border-amber-500/50 text-xs font-bold px-2 py-1 rounded-md shadow-sm">
-                            LVL {currentLevel}
-                          </div>
-                       </div>
-                       
-                       <div className="space-y-1">
-                         <div className="flex items-center gap-2 mb-1">
-                           <h3 className="text-3xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">
-                             {getRankName(currentLevel).split(" ")[0]}
-                           </h3>
-                           <button onClick={() => setShowLevelModal(true)} className="text-slate-400 hover:text-white transition-colors"><Info className="w-4 h-4"/></button>
-                         </div>
-                         <p className="text-slate-400 text-sm font-medium">Rank: {getRankName(currentLevel)}</p>
-                         
-                         <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${characterClass.bg} ${characterClass.borderColor} ${characterClass.color} mt-1`}>
-                            <ClassIcon className="w-3.5 h-3.5" />
-                            <span className="text-xs font-bold uppercase tracking-wide">Class: {characterClass.name}</span>
-                         </div>
-                       </div>
-                    </div>
-
-                    <div className="text-left md:text-right flex-1 w-full md:w-auto mt-4 md:mt-0">
-                        <div className="flex justify-between md:justify-end text-sm text-slate-400 mb-2 gap-4">
-                            <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-yellow-400"/> EXP: {grandTotalCompleted}</span>
-                            <span>Next Level: {xpToNext} XP</span>
-                        </div>
-                        <div className="h-4 bg-slate-800/50 rounded-sm border border-slate-700 relative overflow-hidden">
-                            <div 
-                                className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-amber-500 relative transition-all duration-700"
-                                style={{ width: `${levelProgress}%` }}
-                            >
-                                <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
-                            </div>
-                        </div>
-                         <p className="text-right text-xs text-slate-500 mt-2 font-mono">YEARLY COMPLETION: {totalProgressPercentage}%</p>
-                    </div>
-                  </div>
-                </div>
-             </Card>
-             
-             {/* Comparison */}
-             <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-3">
-                   <div className="bg-blue-50 p-2 rounded-lg text-blue-600">
-                      <ArrowLeftRight className="w-5 h-5" />
-                   </div>
-                   <div>
-                      <p className="text-sm font-bold text-slate-900">ความต่อเนื่อง (Continuity)</p>
-                      <p className="text-xs text-slate-500">เปรียบเทียบผลงาน {currentYear} vs {currentYear - 1}</p>
-                   </div>
-                </div>
-                <div className="flex items-end gap-4 h-12">
-                   {historicalData.map((d) => (
-                      <div key={d.year} className="flex flex-col items-center justify-end h-full">
-                         <div className="w-8 bg-slate-200 rounded-t-sm" style={{ height: `${Math.min(100, (d.completed / 500) * 100)}%` }}></div>
-                         <span className="text-[10px] text-slate-500 mt-1">{d.year}</span>
-                      </div>
-                   ))}
-                </div>
-             </div>
-
-             {/* Charts Area */}
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Card className="lg:col-span-1 p-4 bg-slate-50 border-slate-200 flex flex-col items-center justify-center min-h-[300px]">
-                    <h4 className="text-slate-900 font-bold mb-4 flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-indigo-500" />
-                        Character Attributes ({selectedYear})
-                    </h4>
-                    <div className="w-full h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={categoryStats}>
-                                <PolarGrid stroke="#e2e8f0" />
-                                <PolarAngleAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }} />
-                                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                                <Radar
-                                    name="Performance"
-                                    dataKey="rate"
-                                    stroke="#6366f1"
-                                    strokeWidth={2}
-                                    fill="#818cf8"
-                                    fillOpacity={0.4}
-                                />
-                                <Tooltip 
-                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                    formatter={(value) => [`${value}%`, 'Proficiency']}
-                                />
-                            </RadarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </Card>
-
-                <Card className="lg:col-span-2 p-6 bg-white border-slate-200">
-                    <div className="flex justify-between items-center mb-6">
-                        <h4 className="text-slate-900 font-bold flex items-center gap-2">
-                            <Scroll className="w-5 h-5 text-indigo-500" />
-                            Skill Proficiency
-                        </h4>
-                        <div className="bg-slate-100 p-1 rounded-lg flex text-xs font-bold">
-                            {['weekly', 'monthly', 'yearly'].map(p => (
-                                <button
-                                    key={p}
-                                    onClick={() => setReportPeriod(p)}
-                                    className={`
-                                        px-3 py-1.5 rounded-md uppercase tracking-wider transition-all
-                                        ${reportPeriod === p ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-400 hover:text-slate-600'}
-                                    `}
-                                >
-                                    {p === 'weekly' ? 'Week' : p === 'monthly' ? 'Month' : 'Year'}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                        {categoryStats.map((cat) => (
-                            <div key={cat.name} className="mb-2">
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="font-semibold text-slate-700 flex items-center gap-2">
-                                      <span className={`w-2 h-2 rounded-full ${cat.styles.bg.replace('bg-', 'bg-').replace('100', '500')}`}></span>
-                                      {cat.name}
-                                    </span>
-                                    <span className="font-mono text-slate-500">{cat.rate}/100</span>
-                                </div>
-                                <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-100">
-                                    <div 
-                                        className="h-full rounded-full transition-all duration-1000 ease-out relative"
-                                        style={{ width: `${cat.rate}%`, backgroundColor: cat.styles.hex }}
-                                    >
-                                         <div className="absolute top-0 right-0 bottom-0 w-[2px] bg-white/50 shadow-[0_0_8px_white]"></div>
-                                    </div>
-                                </div>
-                                <p className="text-[10px] text-slate-400 mt-0.5 text-right">
-                                    {cat.completed} quests completed
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
-             </div>
-             
-             <Card className="p-6">
-               <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                 <TrendingUp className="w-5 h-5 text-indigo-500" />
-                 Activity Log
-               </h3>
-               <div className="h-64 w-full">
-                 <ResponsiveContainer width="100%" height="100%">
-                   <BarChart data={chartData}>
-                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                     <XAxis 
-                        dataKey="name" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{fill: '#64748b', fontSize: 11}} 
-                        dy={10} 
-                        interval={reportPeriod === 'yearly' ? 0 : 'preserveEnd'} 
-                     />
-                     <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11}} />
-                     <Tooltip 
-                        cursor={{fill: '#f1f5f9'}}
-                        contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                     />
-                     <Bar dataKey="completed" radius={[4, 4, 0, 0]} barSize={reportPeriod === 'weekly' ? 40 : 20}>
-                        {chartData.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={reportPeriod === 'weekly' ? '#6366f1' : reportPeriod === 'monthly' ? '#8b5cf6' : '#ec4899'} 
-                            fillOpacity={0.9}
-                          />
-                        ))}
-                     </Bar>
-                   </BarChart>
-                 </ResponsiveContainer>
-               </div>
-             </Card>
-          </div>
-        )}
-
       </main>
 
-      {/* Floating Add Button */}
-      <button 
-        onClick={() => setShowAddModal(true)}
-        className="fixed bottom-6 right-6 md:hidden bg-indigo-600 text-white p-4 rounded-full shadow-lg shadow-indigo-300 hover:bg-indigo-700 active:scale-95 transition-all z-40"
-      >
-        <Plus className="w-6 h-6" />
-      </button>
+      {/* Floating Action Button (Only on Dashboard) */}
+      {activeTab === 'dashboard' && selectedYear === currentYear && (
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="fixed bottom-6 right-6 bg-indigo-600 text-white p-4 rounded-full shadow-lg shadow-indigo-300 active:scale-90 transition-transform z-50 flex items-center justify-center"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      )}
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-slate-900">เพิ่มเป้าหมายใหม่</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4 pb-safe-bottom">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5 animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-bold text-slate-900">ภารกิจใหม่ 🚀</h3>
+              <button onClick={() => setShowAddModal(false)} className="bg-slate-100 p-1 rounded-full"><X className="w-5 h-5 text-slate-500" /></button>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">ชื่อเป้าหมาย</label>
+                <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">ชื่อภารกิจ</label>
                 <input 
                   type="text" 
                   value={newGoal.title}
                   onChange={(e) => setNewGoal({...newGoal, title: e.target.value})}
-                  placeholder="เช่น ลดน้ำหนัก, อ่านหนังสือ"
-                  className="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-4 py-2 border"
+                  className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium focus:border-indigo-500 focus:ring-indigo-500"
+                  placeholder="เช่น ดื่มน้ำ 3 ลิตร..."
                   autoFocus
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">หมวดหมู่</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">หมวดหมู่</label>
                   <select 
                     value={newGoal.category}
                     onChange={(e) => setNewGoal({...newGoal, category: e.target.value})}
-                    className="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 border"
+                    className="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"
                   >
-                    <option value="สุขภาพ">สุขภาพ</option>
-                    <option value="การเรียนรู้">การเรียนรู้</option>
-                    <option value="การงาน">การงาน</option>
-                    <option value="การเงิน">การเงิน</option>
-                    <option value="จิตใจ">จิตใจ</option>
-                    <option value="อื่นๆ">อื่นๆ</option>
+                    {Object.keys(CATEGORY_CONFIG).map(k => <option key={k} value={k}>{k}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">ความถี่ (Frequency)</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">ความถี่</label>
                   <select 
                     value={newGoal.frequency}
                     onChange={(e) => setNewGoal({...newGoal, frequency: e.target.value})}
-                    className="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 border"
+                    className="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2.5 text-sm"
                   >
-                    <option value="daily">ทุกวัน (Daily)</option>
-                    <option value="weekly">รายสัปดาห์ (Weekly)</option>
-                    <option value="monthly">รายเดือน (Monthly)</option>
+                    <option value="daily">ทุกวัน</option>
+                    <option value="weekly">รายสัปดาห์</option>
+                    <option value="monthly">รายเดือน</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">เป้าหมายจำนวนครั้ง (ต่อปี)</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">เป้าหมาย (ครั้ง/ปี)</label>
                   <input 
                     type="number" 
                     value={newGoal.targetDays}
                     onChange={(e) => setNewGoal({...newGoal, targetDays: e.target.value})}
-                    className="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2 border"
+                    className="w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium"
                   />
-                  <p className="text-xs text-slate-400 mt-1">แนะนำ: Daily ~365, Weekly ~52, Monthly ~12</p>
+                  <p className="text-[10px] text-slate-400 mt-1.5 ml-1">Daily ~365, Weekly ~52, Monthly ~12</p>
               </div>
 
               <button 
                 onClick={handleAddGoal}
                 disabled={!newGoal.title}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-medium py-2.5 rounded-lg mt-4 transition-colors flex justify-center items-center gap-2"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-bold py-3 rounded-xl mt-2 transition-colors flex justify-center items-center gap-2"
               >
-                <Plus className="w-4 h-4" /> สร้างเป้าหมาย
+                สร้างภารกิจ
               </button>
             </div>
           </div>
@@ -1268,7 +1067,6 @@ export default function FocusYearApp() {
           goal={selectedGoalHistory} 
           onClose={() => setSelectedGoalHistory(null)}
           onToggleDate={(id, date) => {
-             // Basic toggle for history manual edit (doesn't use smart toggle logic to allow manual override)
              setResolutions(resolutions.map(res => {
                if (res.id === id) {
                  const exists = res.completedDates.includes(date);
