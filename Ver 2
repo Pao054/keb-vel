@@ -1,0 +1,1601 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  CheckCircle, 
+  Plus, 
+  BarChart2, 
+  Target, 
+  TrendingUp, 
+  Calendar as CalendarIcon, 
+  Trash2, 
+  Award, 
+  Flame, 
+  Layout, 
+  List, 
+  X, 
+  ChevronLeft, 
+  ChevronRight, 
+  PieChart as PieChartIcon, 
+  Activity, 
+  Quote, 
+  Star, 
+  Zap, 
+  Info, 
+  Crown, 
+  Medal, 
+  Shield, 
+  Trophy, 
+  Swords, 
+  Scroll, 
+  History, 
+  ArrowLeftRight, 
+  Coins, 
+  BookOpen, 
+  Briefcase, 
+  Compass, 
+  Heart,
+  Clock,
+  Repeat,
+  Smile,
+  Dumbbell,
+  Lightbulb,
+  Wallet,
+  Sparkles,
+  PartyPopper,
+  ThumbsUp,
+  Gift,
+  CalendarDays,
+  Zap as ZapIcon,
+  Timer,
+  Play,
+  Pause,
+  Square,
+  Pencil
+} from 'lucide-react';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Cell, 
+  Radar, 
+  RadarChart, 
+  PolarGrid, 
+  PolarAngleAxis, 
+  PolarRadiusAxis 
+} from 'recharts';
+
+// --- Configuration ---
+
+const CATEGORY_CONFIG = {
+  'สุขภาพ': { 
+    color: 'emerald', 
+    icon: Activity, 
+    bg: 'bg-emerald-100', 
+    text: 'text-emerald-700', 
+    border: 'border-emerald-200',
+    hex: '#10b981'
+  },
+  'การเรียนรู้': { 
+    color: 'blue', 
+    icon: BookOpen, 
+    bg: 'bg-blue-100', 
+    text: 'text-blue-700', 
+    border: 'border-blue-200',
+    hex: '#3b82f6'
+  },
+  'การงาน': { 
+    color: 'indigo', 
+    icon: Briefcase, 
+    bg: 'bg-indigo-100', 
+    text: 'text-indigo-700', 
+    border: 'border-indigo-200',
+    hex: '#6366f1'
+  },
+  'การเงิน': { 
+    color: 'amber', 
+    icon: Coins, 
+    bg: 'bg-amber-100', 
+    text: 'text-amber-700', 
+    border: 'border-amber-200',
+    hex: '#f59e0b'
+  },
+  'จิตใจ': { 
+    color: 'rose', 
+    icon: Heart, 
+    bg: 'bg-rose-100', 
+    text: 'text-rose-700', 
+    border: 'border-rose-200',
+    hex: '#f43f5e'
+  },
+  'อื่นๆ': { 
+    color: 'slate', 
+    icon: Compass, 
+    bg: 'bg-slate-100', 
+    text: 'text-slate-700', 
+    border: 'border-slate-200',
+    hex: '#64748b'
+  },
+};
+
+// Quotes
+const HABIT_QUOTES = [
+  "ความสำเร็จไม่ได้มาจากการทำสิ่งที่ยิ่งใหญ่ในวันเดียว แต่มาจากการทำสิ่งเล็กๆ ในทุกๆ วัน",
+  "วินัยคือสะพานที่เชื่อมระหว่างเป้าหมายและความสำเร็จ",
+  "อย่ารอให้พร้อม เพราะวันนั้นอาจไม่มีจริง เริ่มต้นเลย!",
+  "ทุกย่างก้าวเล็กๆ ล้วนนำไปสู่ความสำเร็จที่ยิ่งใหญ่",
+  "ล้มได้ก็ลุกได้ อย่ากลัวที่จะเริ่มต้นใหม่",
+  "ความสม่ำเสมอคือกุญแจสำคัญสู่ความสำเร็จ",
+  "อนาคตขึ้นอยู่กับสิ่งที่คุณทำในวันนี้ ไม่ใช่วันพรุ่งนี้",
+  "เปลี่ยน 'สักวันหนึ่ง' ให้เป็น 'วันแรก' ของการเริ่มต้น",
+  "แรงบันดาลใจทำให้เราเริ่มทำ แต่วินัยทำให้เราทำต่อไป",
+  "เราคือสิ่งที่เราทำซ้ำๆ ความเป็นเลิศจึงไม่ใช่อาการ แต่คือนิสัย"
+];
+
+// Celebration Messages
+const CELEBRATION_MESSAGES = [
+  { text: "เยี่ยมมาก!", icon: PartyPopper, color: "text-emerald-600", bg: "bg-emerald-100" },
+  { text: "สุดยอดไปเลย!", icon: Star, color: "text-amber-500", bg: "bg-amber-100" },
+  { text: "ทำได้ดีมาก!", icon: ThumbsUp, color: "text-blue-600", bg: "bg-blue-100" },
+  { text: "เก่งมาก!", icon: Crown, color: "text-indigo-600", bg: "bg-indigo-100" },
+  { text: "ไฟลุกแล้ว!", icon: Flame, color: "text-orange-600", bg: "bg-orange-100" },
+  { text: "เก็บแต้มสำเร็จ!", icon: Gift, color: "text-rose-600", bg: "bg-rose-100" },
+];
+
+// --- Helpers ---
+
+const getLocalDateString = () => {
+  const d = new Date();
+  const offset = d.getTimezoneOffset() * 60000;
+  const localISOTime = (new Date(d - offset)).toISOString().slice(0, 10);
+  return localISOTime;
+};
+
+const getWeekNumber = (d) => {
+  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return weekNo;
+};
+
+const getPeriodKey = (dateStr, frequency) => {
+  const d = new Date(dateStr);
+  if (frequency === 'weekly') {
+    return `${d.getFullYear()}-W${getWeekNumber(d)}`;
+  }
+  if (frequency === 'monthly') {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+  return dateStr; 
+};
+
+const calculateStreak = (dates, frequency = 'daily') => {
+  if (!dates || dates.length === 0) return 0;
+  const periods = [...new Set(dates.map(d => getPeriodKey(d, frequency)))].sort().reverse();
+  
+  if (periods.length === 0) return 0;
+
+  if (frequency === 'daily') {
+      let sortedDates = [...dates].sort((a, b) => new Date(b) - new Date(a));
+      let tempStreak = 1;
+      let current = new Date(sortedDates[0]);
+      
+      const last = sortedDates[0];
+      const todayStr = getLocalDateString();
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      
+      if (last !== todayStr && last !== yesterday) return 0; 
+
+      for (let i = 1; i < sortedDates.length; i++) {
+        const prev = new Date(sortedDates[i]);
+        const diffTime = Math.abs(current - prev);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        if (diffDays === 1) {
+          tempStreak++;
+          current = prev;
+        } else {
+          break;
+        }
+      }
+      return tempStreak;
+  } else {
+      return periods.length; 
+  }
+};
+
+// --- Visual Components ---
+
+const KebVelLogo = () => (
+  <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/30 border border-white/20 relative overflow-hidden group">
+    <div className="absolute inset-0 bg-gradient-to-tr from-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+    <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-white/20 blur-md rounded-full"></div>
+    <TrendingUp className="w-5 h-5 text-white relative z-10 drop-shadow-md" strokeWidth={3} />
+  </div>
+);
+
+const Card = ({ children, className = "" }) => (
+  <div className={`bg-white rounded-2xl border border-slate-200 shadow-sm ${className}`}>
+    {children}
+  </div>
+);
+
+const CategoryBadge = ({ category }) => {
+  const config = CATEGORY_CONFIG[category] || CATEGORY_CONFIG['อื่นๆ'];
+  const Icon = config.icon;
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase border ${config.bg} ${config.text} ${config.border}`}>
+      <Icon className="w-3 h-3" />
+      {category}
+    </span>
+  );
+};
+
+// Impact Badge Component
+const ImpactBadge = ({ level }) => {
+  let colorClass = "bg-slate-100 text-slate-600 border-slate-200";
+  let iconColor = "fill-slate-400 text-slate-400";
+  
+  if (level >= 8) {
+    colorClass = "bg-rose-100 text-rose-600 border-rose-200";
+    iconColor = "fill-rose-500 text-rose-500";
+  } else if (level >= 4) {
+    colorClass = "bg-amber-100 text-amber-600 border-amber-200";
+    iconColor = "fill-amber-500 text-amber-500";
+  } else {
+    colorClass = "bg-blue-50 text-blue-500 border-blue-100";
+    iconColor = "fill-blue-400 text-blue-400";
+  }
+
+  return (
+    <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-[9px] font-bold uppercase tracking-wider ${colorClass}`}>
+       <ZapIcon className={`w-2.5 h-2.5 ${iconColor}`} />
+       <span>Impact: {level}</span>
+    </div>
+  );
+};
+
+// 3D Progress Bar Component
+const ThreeDProgressBar = ({ current, total, colorClass = "from-indigo-500 to-purple-600", height = "h-3" }) => {
+  const percentage = total > 0 ? Math.min(100, Math.max(0, (current / total) * 100)) : 0;
+  return (
+    <div className={`w-full bg-slate-200 rounded-full ${height} mt-2 overflow-hidden shadow-inner border border-black/5`}>
+      <div 
+        className={`h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-b ${colorClass} relative shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]`} 
+        style={{ width: `${percentage}%` }}
+      >
+        <div className="absolute top-0 left-0 right-0 h-[40%] bg-gradient-to-b from-white/40 to-transparent rounded-t-full"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-1 bg-white/30 blur-[1px]"></div>
+      </div>
+    </div>
+  );
+};
+
+// Class Visual Card
+const ClassVisual = ({ className, icon: Icon, color, level }) => {
+  return (
+    <div className="relative w-full h-32 rounded-xl overflow-hidden mb-4 group border border-slate-200">
+      <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-90 transition-all duration-500 group-hover:scale-105`}></div>
+      <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl -mr-8 -mt-8"></div>
+      <div className="absolute bottom-0 left-0 w-16 h-16 bg-black/10 rounded-full blur-lg -ml-4 -mb-4"></div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10">
+        <div className="relative">
+          <div className="absolute inset-0 bg-white/20 blur-lg rounded-full scale-150"></div>
+          <Icon className="w-12 h-12 relative z-10 drop-shadow-[0_4px_4px_rgba(0,0,0,0.3)] transform group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
+        </div>
+        <h3 className="font-black text-lg mt-2 tracking-wide uppercase drop-shadow-sm">{className}</h3>
+        <span className="text-[10px] font-bold bg-black/20 px-2 py-0.5 rounded-full border border-white/10 backdrop-blur-sm">
+          Class Mastery Lv.{level}
+        </span>
+      </div>
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+    </div>
+  );
+};
+
+// --- Celebration Overlay ---
+const CelebrationOverlay = ({ show, config }) => {
+  if (!show || !config) return null;
+  const { text, icon: Icon, color, bg } = config;
+  
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none px-4">
+        <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200"></div>
+        <div className="relative bg-white p-8 rounded-[2rem] shadow-2xl transform animate-in zoom-in-50 duration-300 flex flex-col items-center border border-slate-100">
+            <div className="absolute -top-4 -left-4 text-3xl animate-bounce delay-100">✨</div>
+            <div className="absolute -bottom-4 -right-4 text-3xl animate-bounce delay-300">🎉</div>
+            <div className={`${bg} p-4 rounded-full mb-4 animate-in slide-in-from-bottom-2 duration-500 shadow-md`}>
+               <Icon className={`w-12 h-12 ${color}`} />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 mb-1 tracking-tight">{text}</h3>
+            <p className="text-slate-500 text-sm font-medium">ทำภารกิจสำเร็จแล้ว</p>
+        </div>
+    </div>
+  );
+};
+
+// --- Focus Timer Modal ---
+const FocusTimerModal = ({ goal, onClose, onComplete }) => {
+  // Use custom duration or default 25
+  const durationMinutes = goal.timerDuration || 25;
+  const [timeLeft, setTimeLeft] = useState(durationMinutes * 60); 
+  const [isActive, setIsActive] = useState(false);
+  const totalTime = durationMinutes * 60;
+  
+  useEffect(() => {
+    let interval = null;
+    if (isActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft(timeLeft => timeLeft - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setIsActive(false);
+      onComplete(); 
+    }
+    return () => clearInterval(interval);
+  }, [isActive, timeLeft, onComplete]);
+
+  const toggleTimer = () => {
+    setIsActive(!isActive);
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const progress = ((totalTime - timeLeft) / totalTime) * 100;
+
+  return (
+    <div className="fixed inset-0 z-[80] bg-slate-900/95 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-white animate-in fade-in duration-300">
+       <button onClick={onClose} className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+         <X className="w-6 h-6 text-white" />
+       </button>
+       
+       <div className="text-center mb-8">
+         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-500/50 text-indigo-200 text-xs font-bold uppercase tracking-wider mb-4">
+            <Zap className="w-3 h-3" /> Focus Mode
+         </div>
+         <h2 className="text-2xl font-bold mb-2">{goal.title}</h2>
+         <p className="text-slate-400 text-sm">โฟกัสที่งานตรงหน้า {durationMinutes} นาที</p>
+       </div>
+
+       {/* Circular Timer UI */}
+       <div className="relative w-64 h-64 flex items-center justify-center mb-10">
+          <svg className="absolute inset-0 w-full h-full -rotate-90">
+             <circle cx="128" cy="128" r="120" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-800" />
+             <circle 
+                cx="128" cy="128" r="120" 
+                stroke="currentColor" strokeWidth="8" fill="transparent" 
+                strokeDasharray={2 * Math.PI * 120}
+                strokeDashoffset={2 * Math.PI * 120 * (1 - progress / 100)}
+                strokeLinecap="round"
+                className="text-indigo-500 transition-all duration-1000 ease-linear"
+             />
+          </svg>
+          
+          <div className="text-center z-10">
+             <div className="text-6xl font-black tracking-tighter tabular-nums mb-1 font-mono">
+               {formatTime(timeLeft)}
+             </div>
+             <p className="text-indigo-300 text-xs font-bold uppercase tracking-widest">{isActive ? 'RUNNING' : 'PAUSED'}</p>
+          </div>
+       </div>
+
+       {/* Controls */}
+       <div className="flex gap-4">
+          <button 
+             onClick={toggleTimer}
+             className="h-16 w-16 rounded-full bg-white text-slate-900 flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg shadow-white/10"
+          >
+             {isActive ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-1" />}
+          </button>
+          
+          <button 
+             onClick={onClose}
+             className="h-16 w-16 rounded-full bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all"
+          >
+             <Square className="w-5 h-5 fill-current" />
+          </button>
+       </div>
+    </div>
+  );
+};
+
+// --- History Calendar Component ---
+const HistoryCalendar = ({ goal, onClose, onToggleDate }) => {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const todayStr = getLocalDateString();
+  
+  const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+  const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+
+  const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+  const changeMonth = (offset) => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1));
+  };
+
+  const getDayClass = (day) => {
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const isCompleted = goal.completedDates.includes(dateStr);
+    const isToday = dateStr === todayStr;
+    const isPast = dateStr < todayStr;
+    
+    let base = "h-9 w-9 rounded-xl flex items-center justify-center text-sm font-bold cursor-pointer transition-all border-2 ";
+    
+    if (isCompleted) {
+      return base + "bg-emerald-500 border-emerald-600 text-white shadow-[0_2px_0_#065f46] hover:translate-y-[1px] hover:shadow-none";
+    } else if (isPast) {
+      return base + "bg-slate-50 border-slate-200 text-slate-300";
+    } else if (isToday) {
+      return base + "border-indigo-500 text-indigo-600 bg-white shadow-[0_0_10px_rgba(99,102,241,0.3)]";
+    }
+    
+    return base + "border-transparent text-slate-400";
+  };
+
+  const handleDateClick = (day) => {
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    onToggleDate(goal.id, dateStr);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[70] p-4 animate-in fade-in duration-200" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200 border border-slate-200">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h3 className="font-bold text-xl text-slate-900 tracking-tight">{goal.title}</h3>
+            <p className="text-xs text-slate-500 mt-0.5">ประวัติการทำภารกิจ</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X className="w-5 h-5" /></button>
+        </div>
+
+        <div className="flex items-center justify-between mb-6 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+          <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-white rounded-xl text-slate-500 shadow-sm transition-all"><ChevronLeft className="w-4 h-4" /></button>
+          <span className="font-bold text-slate-700">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear() + 543}</span>
+          <button onClick={() => changeMonth(1)} className="p-2 hover:bg-white rounded-xl text-slate-500 shadow-sm transition-all"><ChevronRight className="w-4 h-4" /></button>
+        </div>
+
+        <div className="grid grid-cols-7 gap-2 text-center mb-2">
+          {['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'].map(d => <span key={d} className="text-xs font-bold text-slate-400">{d}</span>)}
+        </div>
+
+        <div className="grid grid-cols-7 gap-2 place-items-center">
+          {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`} />)}
+          {Array.from({ length: daysInMonth }).map((_, i) => {
+            const day = i + 1;
+            return (
+              <div key={day} onClick={() => handleDateClick(day)} className={getDayClass(day)}>
+                {day}
+              </div>
+            );
+          })}
+        </div>
+        
+        <div className="mt-4 text-center">
+           <p className="text-[10px] text-slate-400">แตะที่วันที่เพื่อแก้ไขสถานะ (ข้อมูลจะอัปเดตทันที)</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Level Info Modal ---
+const LevelInfoModal = ({ onClose }) => {
+  const ranks = [
+    { name: "Novice Dreamer", levels: "Lv. 1", range: "0 - 19 XP", icon: Star, color: "text-slate-500", bg: "bg-slate-100", desc: "จุดเริ่มต้นของการเดินทางที่ยิ่งใหญ่" },
+    { name: "Goal Seeker", levels: "Lv. 2 - 5", range: "20 - 99 XP", icon: Medal, color: "text-emerald-500", bg: "bg-emerald-100", desc: "เริ่มมีความชัดเจนและลงมือทำอย่างต่อเนื่อง" },
+    { name: "Habit Builder", levels: "Lv. 6 - 10", range: "100 - 199 XP", icon: Shield, color: "text-blue-500", bg: "bg-blue-100", desc: "วินัยเริ่มแข็งแกร่ง กลายเป็นส่วนหนึ่งของชีวิต" },
+    { name: "Consistency Master", levels: "Lv. 11 - 20", range: "200 - 399 XP", icon: Trophy, color: "text-amber-500", bg: "bg-amber-100", desc: "ความสม่ำเสมอคืออาวุธที่ทรงพลังที่สุดของคุณ" },
+    { name: "Resolution Legend", levels: "Lv. 21+", range: "400+ XP", icon: Crown, color: "text-purple-500", bg: "bg-purple-100", desc: "คุณคือสุดยอดผู้พิชิตเป้าหมายแห่งปี!" }
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 p-4" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-0 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[80vh] border border-slate-200">
+        <div className="bg-indigo-600 p-6 text-white flex justify-between items-start relative overflow-hidden shrink-0">
+           <div className="relative z-10">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <Award className="w-6 h-6 text-amber-300" />
+                ระบบเลเวลและยศ
+              </h3>
+              <p className="text-indigo-100 text-sm mt-1 opacity-90">คู่มือการพัฒนาตนเองสู่ความสำเร็จ</p>
+           </div>
+           <button onClick={onClose} className="text-white/70 hover:text-white hover:bg-white/10 p-1 rounded-full transition-colors relative z-10">
+             <X className="w-6 h-6" />
+           </button>
+           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+        </div>
+        <div className="p-6 overflow-y-auto">
+          <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+             <h4 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
+               <Zap className="w-4 h-4 text-amber-500" /> วิธีการเลื่อนเลเวล (Updated!)
+             </h4>
+             <ul className="text-sm text-slate-600 space-y-2">
+               <li className="flex items-start gap-2">
+                 <span className="bg-indigo-100 text-indigo-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
+                 <span>ตอนนี้ <strong>1 Check-in</strong> มีค่าเท่ากับ <strong>ค่า Impact (XP)</strong> ของงานนั้นๆ</span>
+               </li>
+               <li className="flex items-start gap-2">
+                 <span className="bg-indigo-100 text-indigo-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
+                 <span>สะสมครบทุกๆ <strong>100 XP</strong> ระดับเลเวลของคุณจะเพิ่มขึ้น 1 ขั้น (งาน Impact สูง = เวลไว!)</span>
+               </li>
+             </ul>
+          </div>
+          <div className="space-y-3 relative before:absolute before:inset-0 before:ml-6 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+            {ranks.map((rank, index) => {
+              const RankIcon = rank.icon;
+              return (
+                <div key={index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active mb-4">
+                  <div className={`flex items-center justify-center w-12 h-12 rounded-full border-4 border-white shadow-lg shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 ${rank.bg} ${rank.color}`}>
+                     <RankIcon className="w-6 h-6" />
+                  </div>
+                  <div className="w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${rank.bg} ${rank.color}`}>{rank.levels}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{rank.range}</span>
+                    </div>
+                    <h5 className="font-bold text-slate-800">{rank.name}</h5>
+                    <p className="text-xs text-slate-500 mt-1">{rank.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Main App ---
+
+export default function FocusYearApp() {
+  const currentYear = new Date().getFullYear();
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showLevelModal, setShowLevelModal] = useState(false);
+  const [selectedGoalId, setSelectedGoalId] = useState(null); 
+  const [reportPeriod, setReportPeriod] = useState('weekly'); 
+  const [selectedYear, setSelectedYear] = useState(currentYear); 
+  const [celebrationConfig, setCelebrationConfig] = useState(null); 
+  const [summaryMonthIndex, setSummaryMonthIndex] = useState(new Date().getMonth()); 
+  const [editingGoal, setEditingGoal] = useState(null);
+  
+  // Focus Timer States
+  const [showFocusModal, setShowFocusModal] = useState(false);
+  const [activeFocusGoal, setActiveFocusGoal] = useState(null);
+
+  // Initial Mock Data 
+  const initialResolutions = [
+    {
+      id: 1,
+      title: "ดื่มน้ำให้ครบ 3 ลิตร",
+      category: "สุขภาพ",
+      frequency: "daily",
+      targetDays: 365,
+      completedDates: ["2024-12-30", "2024-12-31", "2025-01-01", "2025-01-02", "2025-01-03", "2025-01-04"],
+      impact: 2
+    },
+    {
+      id: 2,
+      title: "อ่านหนังสือวันละ 30 นาที",
+      category: "การเรียนรู้",
+      frequency: "daily",
+      targetDays: 100,
+      completedDates: ["2024-12-25", "2025-01-01"],
+      impact: 5,
+      hasTimer: true,
+      timerDuration: 30
+    },
+    {
+      id: 3,
+      title: "วิ่งออกกำลังกาย (3 วัน/สัปดาห์)",
+      category: "สุขภาพ",
+      frequency: "weekly",
+      targetDays: 52, // 52 weeks
+      completedDates: ["2025-01-01"], 
+      impact: 9,
+      hasTimer: true,
+      timerDuration: 45
+    }
+  ];
+
+  const [resolutions, setResolutions] = useState(initialResolutions);
+  const [newGoal, setNewGoal] = useState({ 
+      title: '', 
+      category: 'สุขภาพ', 
+      targetDays: 30, 
+      frequency: 'daily', 
+      impact: 5,
+      hasTimer: false,
+      timerDuration: 25
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem('focusYearData');
+    if (saved) {
+      try {
+        setResolutions(JSON.parse(saved));
+      } catch (e) { console.error(e); }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('focusYearData', JSON.stringify(resolutions));
+  }, [resolutions]);
+
+  const today = getLocalDateString();
+
+  const dailyQuote = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    let hash = 0;
+    for (let i = 0; i < todayStr.length; i++) {
+      hash = todayStr.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % HABIT_QUOTES.length;
+    return HABIT_QUOTES[index];
+  }, []);
+
+  const getFilteredResolutions = () => {
+    return resolutions.map(res => {
+      const datesInYear = res.completedDates.filter(d => d.startsWith(`${selectedYear}-`));
+      const uniquePeriods = new Set(datesInYear.map(d => getPeriodKey(d, res.frequency || 'daily')));
+      const count = uniquePeriods.size;
+      const streak = calculateStreak(datesInYear, res.frequency || 'daily');
+      
+      return {
+        ...res,
+        yearSpecificCompleted: count,
+        yearSpecificDates: datesInYear,
+        yearSpecificStreak: streak
+      };
+    });
+  };
+
+  const filteredResolutions = getFilteredResolutions();
+
+  const dashboardStats = useMemo(() => {
+    if (selectedYear !== currentYear) {
+       const grandTotalCompleted = filteredResolutions.reduce((acc, curr) => acc + curr.yearSpecificCompleted, 0);
+       const grandTotalTarget = filteredResolutions.reduce((acc, curr) => acc + curr.targetDays, 0); 
+       const rate = grandTotalTarget > 0 ? Math.round((grandTotalCompleted / grandTotalTarget) * 100) : 0;
+       return { weeklyRate: rate, monthlyRate: rate };
+    }
+
+    const todayDate = new Date();
+    const weekStart = new Date(todayDate);
+    weekStart.setDate(todayDate.getDate() - 6);
+    weekStart.setHours(0,0,0,0);
+    const monthStart = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
+    const endOfDay = new Date(todayDate);
+    endOfDay.setHours(23,59,59,999);
+
+    let weeklyCompleted = 0;
+    let weeklyPotential = 0;
+    let monthlyCompleted = 0;
+    let monthlyPotential = 0;
+
+    filteredResolutions.forEach(res => {
+        weeklyPotential += 1; 
+        const doneThisWeek = res.yearSpecificDates.some(dateStr => {
+             const d = new Date(dateStr);
+             d.setHours(0,0,0,0);
+             return d >= weekStart && d <= endOfDay;
+        });
+        if (doneThisWeek) weeklyCompleted++;
+
+        monthlyPotential += 1;
+        const doneThisMonth = res.yearSpecificDates.some(dateStr => {
+             const d = new Date(dateStr);
+             d.setHours(0,0,0,0);
+             return d >= monthStart && d <= endOfDay;
+        });
+        if (doneThisMonth) monthlyCompleted++;
+    });
+
+    return {
+        weeklyRate: weeklyPotential > 0 ? Math.round((weeklyCompleted / weeklyPotential) * 100) : 0,
+        monthlyRate: monthlyPotential > 0 ? Math.round((monthlyCompleted / monthlyPotential) * 100) : 0
+    };
+  }, [filteredResolutions, selectedYear, currentYear]);
+
+  const isGoalCompletedForToday = (goal) => {
+    const periodKey = getPeriodKey(today, goal.frequency || 'daily');
+    return goal.completedDates.some(d => getPeriodKey(d, goal.frequency || 'daily') === periodKey);
+  };
+
+  const triggerCelebration = () => {
+    if (navigator.vibrate) {
+        navigator.vibrate([80, 50, 80]); 
+    }
+    const randomMsg = CELEBRATION_MESSAGES[Math.floor(Math.random() * CELEBRATION_MESSAGES.length)];
+    setCelebrationConfig(randomMsg);
+    
+    setTimeout(() => setCelebrationConfig(null), 2000);
+  };
+
+  const toggleCheckIn = (id) => {
+    setResolutions(resolutions.map(res => {
+      if (res.id === id) {
+        const periodKey = getPeriodKey(today, res.frequency || 'daily');
+        const isDone = res.completedDates.some(d => getPeriodKey(d, res.frequency || 'daily') === periodKey);
+        let newDates = [...res.completedDates];
+        if (isDone) {
+          newDates = newDates.filter(d => getPeriodKey(d, res.frequency || 'daily') !== periodKey);
+        } else {
+          newDates.push(today);
+          triggerCelebration();
+        }
+        return { ...res, completedDates: newDates };
+      }
+      return res;
+    }));
+  };
+
+  const handleAddGoal = () => {
+    if (!newGoal.title) return;
+    const newId = Math.max(...resolutions.map(r => r.id), 0) + 1;
+    setResolutions([...resolutions, {
+      id: newId,
+      title: newGoal.title,
+      category: newGoal.category,
+      frequency: newGoal.frequency,
+      targetDays: parseInt(newGoal.targetDays) || 30,
+      completedDates: [],
+      impact: parseInt(newGoal.impact) || 5,
+      hasTimer: newGoal.hasTimer,
+      timerDuration: parseInt(newGoal.timerDuration) || 25
+    }]);
+    setNewGoal({ title: '', category: 'สุขภาพ', targetDays: 30, frequency: 'daily', impact: 5, hasTimer: false, timerDuration: 25 });
+    setShowAddModal(false);
+  };
+
+  const handleDelete = (id) => {
+    setResolutions(resolutions.filter(r => r.id !== id));
+  };
+  
+  const handleEditClick = (goal) => {
+    setEditingGoal({ ...goal });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateGoal = () => {
+    if (!editingGoal || !editingGoal.title) return;
+    
+    setResolutions(resolutions.map(res => 
+        res.id === editingGoal.id ? { ...res, ...editingGoal, 
+            targetDays: parseInt(editingGoal.targetDays) || 30,
+            impact: parseInt(editingGoal.impact) || 5,
+            timerDuration: parseInt(editingGoal.timerDuration) || 25
+        } : res
+    ));
+    setShowEditModal(false);
+    setEditingGoal(null);
+  };
+
+  // Focus Timer Handlers
+  const handleStartFocus = (goal) => {
+    setActiveFocusGoal(goal);
+    setShowFocusModal(true);
+  };
+
+  const handleFocusComplete = () => {
+    if (activeFocusGoal) {
+       // Auto check-in if not already done today
+       if (!isGoalCompletedForToday(activeFocusGoal)) {
+          toggleCheckIn(activeFocusGoal.id);
+       } else {
+          // If already checked, just celebrate!
+          triggerCelebration();
+       }
+    }
+    setShowFocusModal(false);
+    setActiveFocusGoal(null);
+  };
+
+  // Monthly stats calc
+  const monthlyProgress = useMemo(() => {
+    const months = [];
+    for (let i = 0; i < 12; i++) {
+        const monthStart = new Date(selectedYear, i, 1);
+        const monthEnd = new Date(selectedYear, i + 1, 0, 23, 59, 59);
+        const monthName = monthStart.toLocaleDateString('th-TH', { month: 'long' });
+        
+        let completed = 0;
+        let potential = 0;
+
+        filteredResolutions.forEach(res => {
+            const completionsInMonth = res.yearSpecificDates.filter(d => {
+                const date = new Date(d);
+                return date >= monthStart && date <= monthEnd;
+            });
+            
+            const uniquePeriods = new Set(completionsInMonth.map(d => getPeriodKey(d, res.frequency || 'daily')));
+            completed += uniquePeriods.size;
+
+            if (res.frequency === 'daily') {
+                potential += monthEnd.getDate(); 
+            } else if (res.frequency === 'weekly') {
+                potential += 4; 
+            } else {
+                potential += 1; 
+            }
+        });
+
+        const rate = potential > 0 ? Math.round((completed / potential) * 100) : 0;
+        months.push({ name: monthName, rate, completed, potential });
+    }
+    return months;
+  }, [filteredResolutions, selectedYear]);
+
+  const totalGoals = filteredResolutions.length;
+  const completedToday = filteredResolutions.filter(r => isGoalCompletedForToday(r)).length;
+  const todayCompletionRate = totalGoals > 0 ? Math.round((completedToday / totalGoals) * 100) : 0;
+
+  // New XP Formula: Sum of (Count * Impact)
+  const grandTotalXP = filteredResolutions.reduce((acc, curr) => {
+    const impactVal = curr.impact || 1; 
+    return acc + (curr.yearSpecificCompleted * impactVal);
+  }, 0);
+
+  // Level Logic (Updated)
+  const XP_PER_LEVEL = 100; // Adjusted threshold for higher XP gain
+  const currentLevel = Math.floor(grandTotalXP / XP_PER_LEVEL) + 1;
+  const levelProgress = ((grandTotalXP % XP_PER_LEVEL) / XP_PER_LEVEL) * 100;
+  const xpToNext = XP_PER_LEVEL - (grandTotalXP % XP_PER_LEVEL);
+
+  // Grand Total Target (for reference, still counting tasks)
+  const grandTotalTarget = filteredResolutions.reduce((acc, curr) => acc + curr.targetDays, 0);
+  const totalProgressPercentage = grandTotalTarget > 0 ? Math.round((filteredResolutions.reduce((acc, curr) => acc + curr.yearSpecificCompleted, 0) / grandTotalTarget) * 100) : 0;
+
+  const getRankName = (level) => {
+    if (level <= 1) return "Novice Dreamer";
+    if (level <= 5) return "Goal Seeker";
+    if (level <= 10) return "Habit Builder";
+    if (level <= 20) return "Consistency Master";
+    return "Resolution Legend";
+  };
+
+  const categoryStats = useMemo(() => {
+    const stats = {};
+    Object.keys(CATEGORY_CONFIG).forEach(key => {
+        stats[key] = {
+            name: key,
+            completed: 0,
+            potential: 0,
+            goalCount: 0,
+            styles: CATEGORY_CONFIG[key],
+            fullMark: 100,
+        }
+    });
+
+    filteredResolutions.forEach(res => {
+      const cat = res.category in stats ? res.category : 'อื่นๆ';
+      stats[cat].goalCount += 1;
+      stats[cat].potential += res.targetDays; 
+      stats[cat].completed += res.yearSpecificCompleted;
+    });
+
+    return Object.values(stats).map(stat => ({
+      ...stat,
+      rate: stat.potential > 0 ? Math.min(100, Math.round((stat.completed / stat.potential) * 100)) : 0
+    }));
+  }, [filteredResolutions]);
+
+  const characterClass = useMemo(() => {
+    const sortedCats = [...categoryStats].sort((a, b) => b.completed - a.completed);
+    const topCat = sortedCats[0];
+
+    if (grandTotalXP === 0 || !topCat || topCat.completed === 0) {
+      return { name: "Beginner (ผู้เริ่มต้น)", icon: Star, color: "from-slate-400 to-slate-600", accent: "slate" };
+    }
+    
+    switch(topCat.name) {
+      case 'สุขภาพ': 
+        return { name: "Fitness Warrior", icon: Dumbbell, color: "from-emerald-500 to-green-700", accent: "emerald" };
+      case 'การเรียนรู้': 
+        return { name: "Wisdom Sage", icon: BookOpen, color: "from-blue-500 to-indigo-700", accent: "blue" };
+      case 'การงาน': 
+        return { name: "Productivity Master", icon: Briefcase, color: "from-indigo-500 to-purple-700", accent: "indigo" };
+      case 'การเงิน': 
+        return { name: "Money Wizard", icon: Wallet, color: "from-amber-400 to-orange-600", accent: "amber" };
+      case 'จิตใจ': 
+        return { name: "Spirit Guardian", icon: Sparkles, color: "from-rose-400 to-pink-600", accent: "rose" };
+      default: 
+        return { name: "Balanced Adventurer", icon: Compass, color: "from-slate-500 to-slate-700", accent: "slate" };
+    }
+  }, [categoryStats, grandTotalXP]);
+
+  const getChartData = (period) => {
+    if (period === 'weekly') {
+       const days = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+       return days.map((day) => ({ name: day, completed: Math.floor(Math.random() * 5), total: 5 }));
+    } else if (period === 'monthly') {
+      return ['Week 1', 'Week 2', 'Week 3', 'Week 4'].map(w => ({ name: w, completed: Math.floor(Math.random() * 20), total: 30 }));
+    } else { 
+        return ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'].map(m => ({
+            name: m, completed: Math.floor(Math.random() * 15), total: 30
+        }));
+    }
+  };
+
+  const chartData = getChartData(reportPeriod);
+  const ClassIcon = characterClass.icon;
+
+  // Retrieve actual goal object for the calendar modal from ID
+  const activeGoalForHistory = resolutions.find(r => r.id === selectedGoalId);
+
+  return (
+    <div className="fixed inset-0 flex flex-col bg-slate-50 text-slate-800 font-sans selection:bg-indigo-100 select-none touch-manipulation overflow-hidden transition-colors duration-300">
+      
+      {/* Celebration Popup */}
+      <CelebrationOverlay show={!!celebrationConfig} config={celebrationConfig} />
+
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 flex-none z-50 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="scale-90"><KebVelLogo /></div>
+            <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">Keb Vel</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+             <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
+                <button 
+                  onClick={() => setSelectedYear(selectedYear - 1)}
+                  className="p-1.5 hover:bg-white rounded-md text-slate-500 transition-colors"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <span className="px-2 text-xs font-bold text-slate-700 min-w-[40px] text-center">{selectedYear}</span>
+                <button 
+                  onClick={() => setSelectedYear(selectedYear + 1)}
+                  disabled={selectedYear >= currentYear}
+                  className={`p-1.5 rounded-md transition-colors ${selectedYear >= currentYear ? 'text-slate-300' : 'hover:bg-white text-slate-500'}`}
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+             </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-24 w-full max-w-lg mx-auto">
+        
+        {/* Navigation Tabs */}
+        <div className="flex gap-1 bg-white/50 backdrop-blur-sm border border-slate-200 p-1 rounded-2xl mb-6 shadow-sm sticky top-0 z-40 mx-auto w-full">
+          {[
+            { id: 'dashboard', label: 'ภาพรวม', icon: Layout },
+            { id: 'goals', label: 'เป้าหมาย', icon: List },
+            { id: 'analytics', label: 'เลเวลของคุณ', icon: Swords }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`
+                flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 relative overflow-hidden
+                ${activeTab === tab.id 
+                  ? 'text-indigo-600 shadow-sm' 
+                  : 'text-slate-400 hover:text-slate-600'}
+              `}
+            >
+              {activeTab === tab.id && (
+                <div className="absolute inset-0 bg-white rounded-xl transition-all shadow-sm border border-slate-100"></div>
+              )}
+              <span className="relative z-10 flex items-center gap-1.5">
+                <tab.icon className="w-3.5 h-3.5" />
+                {tab.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* --- DASHBOARD VIEW --- */}
+        {activeTab === 'dashboard' && (
+          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex justify-between items-end px-1">
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                   {selectedYear === currentYear ? 'สวัสดีครับ 🚀' : `บันทึกปี ${selectedYear}`}
+                </h1>
+                <p className="text-xs text-slate-500 mt-1 font-medium">
+                  {selectedYear === currentYear 
+                    ? <span>วันนี้สำเร็จไปแล้ว <span className="text-indigo-600 font-bold text-sm">{completedToday}/{totalGoals}</span></span>
+                    : <span>สรุปภาพรวม</span>
+                  }
+                </p>
+              </div>
+            </div>
+
+            {/* Daily Quote Card */}
+            {selectedYear === currentYear && (
+              <div className="bg-gradient-to-br from-indigo-50 to-white border border-indigo-100 rounded-2xl p-5 flex items-start gap-4 shadow-sm relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl -mr-8 -mt-8 group-hover:bg-indigo-500/20 transition-colors"></div>
+                <div className="bg-white p-2.5 rounded-full shadow-sm border border-indigo-50 relative z-10">
+                  <Quote className="w-5 h-5 text-indigo-500 fill-indigo-100" />
+                </div>
+                <div className="relative z-10">
+                  <p className="text-slate-700 font-medium italic text-sm leading-relaxed">"{dailyQuote}"</p>
+                  <div className="flex items-center gap-2 mt-2">
+                     <div className="h-0.5 w-6 bg-indigo-300 rounded-full"></div>
+                     <p className="text-indigo-400 text-[10px] font-bold uppercase tracking-wider">Quote of the Day</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <Card className="p-4 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white border-none shadow-lg shadow-indigo-500/20">
+                <div className="flex justify-between items-start mb-3">
+                   <p className="text-[10px] font-bold uppercase opacity-80 tracking-wider">วันนี้</p>
+                   <div className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm">
+                      <TrendingUp className="w-3.5 h-3.5 text-white" />
+                   </div>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-black tracking-tight">{todayCompletionRate}%</span>
+                </div>
+                {/* 3D Progress Bar (Mini) */}
+                <div className="w-full bg-black/20 rounded-full h-2 mt-2 shadow-inner">
+                   <div className="h-full bg-white rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.2)]" style={{width: `${todayCompletionRate}%`}}></div>
+                </div>
+              </Card>
+              <Card className="p-4 bg-white">
+                 <div className="flex justify-between items-start mb-3">
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Streak สูงสุด</p>
+                   <div className="p-1.5 bg-amber-50 rounded-lg">
+                      <Flame className="w-3.5 h-3.5 text-amber-500" />
+                   </div>
+                </div>
+                <span className="text-3xl font-black text-slate-900 tracking-tight">
+                    {Math.max(...filteredResolutions.map(r => r.yearSpecificStreak), 0)}
+                 </span>
+                 <p className="text-[10px] text-slate-400 font-medium">วันติดกัน</p>
+              </Card>
+            </div>
+
+            {/* List */}
+            <div>
+              <div className="flex items-center justify-between mb-3 px-1">
+                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                  <CalendarIcon className="w-4 h-4 text-indigo-500" />
+                  To-Do List
+                </h2>
+                {selectedYear === currentYear && (
+                  <button onClick={() => setShowAddModal(true)} className="text-indigo-600 p-1.5 rounded-full hover:bg-indigo-50 transition-colors"><Plus className="w-4 h-4" /></button>
+                )}
+              </div>
+              
+              <div className="space-y-3">
+                {filteredResolutions.map((res) => {
+                  const isDone = isGoalCompletedForToday(res);
+                  const freqLabel = res.frequency === 'weekly' ? 'WEEKLY' : res.frequency === 'monthly' ? 'MONTHLY' : 'DAILY';
+                  const xpGain = res.impact || 1; // XP display
+                  
+                  return (
+                    <div 
+                      key={res.id}
+                      className={`
+                        relative flex items-center p-4 rounded-2xl border transition-all active:scale-[0.98] duration-200 group overflow-hidden
+                        ${isDone 
+                          ? 'bg-indigo-50/50 border-indigo-200 shadow-none' 
+                          : 'bg-white border-slate-200 shadow-sm'}
+                      `}
+                    >
+                      {/* Left Border Accent */}
+                      <div className={`absolute left-0 top-0 bottom-0 w-1 ${isDone ? 'bg-indigo-500' : 'bg-slate-200'}`}></div>
+
+                      {/* Check Button (Left) */}
+                      <div 
+                         onClick={() => {
+                            if (selectedYear === currentYear) toggleCheckIn(res.id);
+                         }}
+                         className={`
+                           flex-shrink-0 w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-all duration-300 cursor-pointer
+                           ${isDone ? 'bg-indigo-500 border-indigo-500 scale-110' : 'border-slate-300 group-hover:border-indigo-400'}
+                         `}
+                      >
+                        {isDone && <CheckCircle className="w-4 h-4 text-white" strokeWidth={3} />}
+                      </div>
+                      
+                      {/* Content (Middle) - Also Clickable */}
+                      <div 
+                         className="flex-1 min-w-0 cursor-pointer"
+                         onClick={() => {
+                            if (selectedYear === currentYear) toggleCheckIn(res.id);
+                         }}
+                      >
+                        <div className="flex justify-between items-center mb-1">
+                           <h3 className={`font-bold text-sm truncate pr-2 ${isDone ? 'text-indigo-900 line-through opacity-70' : 'text-slate-800'}`}>
+                             {res.title}
+                           </h3>
+                           <span className="text-[9px] font-black text-slate-300 tracking-widest">{freqLabel}</span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                           <CategoryBadge category={res.category} />
+                           <span className="text-[9px] font-bold text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">+{xpGain} XP</span>
+                           {res.yearSpecificStreak > 1 && (
+                              <span className="text-[10px] text-amber-600 font-bold flex items-center bg-amber-50 px-1.5 py-0.5 rounded-md">
+                                <Flame className="w-3 h-3 mr-0.5 fill-amber-500 text-amber-500" /> {res.yearSpecificStreak}
+                              </span>
+                           )}
+                        </div>
+                      </div>
+
+                      {/* Focus Timer Button (Right) - Only show if hasTimer is true */}
+                      {res.hasTimer && (
+                          <div className="flex items-center ml-2 border-l border-slate-100 pl-2">
+                             <button 
+                                onClick={(e) => { e.stopPropagation(); handleStartFocus(res); }}
+                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                             >
+                                <Timer className="w-4 h-4" />
+                             </button>
+                          </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --- ANALYTICS VIEW --- */}
+        {activeTab === 'analytics' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+             
+             {/* 3D Visual Class Card */}
+             <ClassVisual 
+                className={characterClass.name} 
+                icon={characterClass.icon} 
+                color={characterClass.color} 
+                level={currentLevel}
+             />
+
+             {/* Level Progress */}
+             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex justify-between items-end mb-2">
+                   <div>
+                      <div className="flex items-center gap-2">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Current Level</p>
+                          <button onClick={() => setShowLevelModal(true)} className="text-slate-400 hover:text-indigo-500">
+                            <Info className="w-3 h-3" />
+                          </button>
+                      </div>
+                      <h3 className="text-3xl font-black text-slate-900 leading-none mt-1">{currentLevel}</h3>
+                   </div>
+                   <div className="text-right">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Next Level</p>
+                      <p className="text-sm font-bold text-indigo-600">{grandTotalXP} <span className="text-slate-300">/</span> {xpToNext + grandTotalXP} XP</p>
+                   </div>
+                </div>
+                <ThreeDProgressBar current={levelProgress} total={100} height="h-5" />
+             </div>
+
+             {/* Monthly Summary Selector */}
+             <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+               <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 px-1">
+                      <CalendarDays className="w-4 h-4 text-indigo-500" />
+                      Monthly Summary
+                  </h4>
+                  <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1 px-2">
+                      <select
+                        value={summaryMonthIndex}
+                        onChange={(e) => setSummaryMonthIndex(parseInt(e.target.value))}
+                        className="bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer py-1"
+                      >
+                        {monthlyProgress.map((m, index) => (
+                          <option key={index} value={index}>
+                            {m.name}
+                          </option>
+                        ))}
+                      </select>
+                   </div>
+               </div>
+               
+               <div className="flex flex-col items-center justify-center py-2">
+                   <div className="relative">
+                      <span className={`text-5xl font-black ${
+                          monthlyProgress[summaryMonthIndex]?.rate >= 80 ? 'text-emerald-500' :
+                          monthlyProgress[summaryMonthIndex]?.rate >= 50 ? 'text-amber-500' :
+                          'text-slate-400'
+                      }`}>
+                          {monthlyProgress[summaryMonthIndex]?.rate}%
+                      </span>
+                   </div>
+                   <p className="text-xs text-slate-400 mt-2 font-medium uppercase tracking-widest">Achievement Rate</p>
+                   
+                   <div className="w-full mt-4 bg-slate-50 rounded-xl p-3 flex justify-between items-center border border-slate-100">
+                      <div className="text-center flex-1 border-r border-slate-200">
+                          <span className="block text-lg font-bold text-slate-700">{monthlyProgress[summaryMonthIndex]?.completed}</span>
+                          <span className="text-[10px] text-slate-400 uppercase">Completed</span>
+                      </div>
+                      <div className="text-center flex-1">
+                          <span className="block text-lg font-bold text-slate-700">{monthlyProgress[summaryMonthIndex]?.potential}</span>
+                          <span className="text-[10px] text-slate-400 uppercase">Total Tasks</span>
+                      </div>
+                   </div>
+               </div>
+             </div>
+
+             {/* Radar Chart */}
+             <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart cx="50%" cy="50%" outerRadius="70%" data={categoryStats}>
+                          <PolarGrid stroke='#e2e8f0' />
+                          <PolarAngleAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 700 }} />
+                          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                          <Radar
+                              name="Performance"
+                              dataKey="rate"
+                              stroke='#6366f1'
+                              strokeWidth={3}
+                              fill='#818cf8'
+                              fillOpacity={0.5}
+                          />
+                      </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+             </div>
+
+             {/* Skills List with 3D Bars */}
+             <div className="space-y-3">
+                <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 px-1">
+                    <Scroll className="w-4 h-4 text-indigo-500" />
+                    Attribute Status
+                </h4>
+                <div className="grid grid-cols-1 gap-3">
+                    {categoryStats.map((cat) => (
+                        <div key={cat.name} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${cat.styles.bg} ${cat.styles.text}`}>
+                               <cat.styles.icon className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex justify-between text-xs mb-1">
+                                    <span className="font-bold text-slate-700">{cat.name}</span>
+                                    <span className="font-bold text-slate-900">{cat.rate}%</span>
+                                </div>
+                                <ThreeDProgressBar 
+                                  current={cat.rate} 
+                                  total={100} 
+                                  colorClass={`from-${cat.styles.color}-400 to-${cat.styles.color}-600`} 
+                                  height="h-2.5" 
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+             </div>
+          </div>
+        )}
+
+        {/* --- GOALS VIEW --- */}
+        {activeTab === 'goals' && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300 pb-20">
+            <div className="flex justify-between items-center px-1">
+              <h2 className="text-lg font-bold text-slate-900">Mission List</h2>
+              {selectedYear === currentYear && (
+                <button 
+                  onClick={() => setShowAddModal(true)}
+                  className="bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-lg active:scale-95 transition-transform"
+                >
+                  <Plus className="w-3.5 h-3.5" /> New Mission
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              {filteredResolutions.map((res) => (
+                <Card key={res.id} className="p-5 relative overflow-hidden group">
+                  <div className="flex justify-between items-start mb-3 relative z-10">
+                    <CategoryBadge category={res.category} />
+                    <div className="flex gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => handleEditClick(res)} className="text-slate-400 hover:text-indigo-500 transition-colors"><Pencil className="w-4 h-4"/></button>
+                        <button onClick={() => setSelectedGoalId(res.id)} className="text-slate-400 hover:text-indigo-500 transition-colors"><CalendarIcon className="w-4 h-4"/></button>
+                        {selectedYear === currentYear && (
+                            <button onClick={() => handleDelete(res.id)} className="text-slate-400 hover:text-rose-500 transition-colors"><Trash2 className="w-4 h-4"/></button>
+                        )}
+                    </div>
+                  </div>
+                  
+                  <div className="relative z-10">
+                    <h3 className="font-bold text-lg text-slate-900 mb-1">{res.title}</h3>
+                    <div className="flex justify-between text-xs text-slate-500 mb-3 font-medium">
+                      <span className="uppercase tracking-wider">{res.frequency}</span>
+                      <span>{res.yearSpecificCompleted} / {res.targetDays}</span>
+                    </div>
+                    <ThreeDProgressBar current={res.yearSpecificCompleted} total={res.targetDays} colorClass="from-indigo-500 to-violet-600" />
+                  </div>
+                  <div className="mt-2">
+                     <ImpactBadge level={res.impact} />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* Floating Action Button */}
+      {activeTab === 'dashboard' && selectedYear === currentYear && (
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="fixed bottom-6 right-6 bg-slate-900 text-white p-4 rounded-2xl shadow-xl shadow-slate-900/20 active:scale-90 transition-transform z-50 flex items-center justify-center border border-white/10"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
+      )}
+
+      {/* Add Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-md flex items-center justify-center z-[60] p-4 pb-safe-bottom">
+          <div className="bg-white rounded-[2rem] shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200 border border-slate-200">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-xl font-black text-slate-900">ภารกิจใหม่</h3>
+                <p className="text-xs text-slate-500">สร้างนิสัยใหม่เพื่อตัวคุณเอง</p>
+              </div>
+              <button onClick={() => setShowAddModal(false)} className="bg-slate-100 p-2 rounded-full hover:rotate-90 transition-transform"><X className="w-5 h-5 text-slate-500" /></button>
+            </div>
+            
+            <div className="space-y-5">
+              <div className="group">
+                <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest group-focus-within:text-indigo-500 transition-colors">ชื่อภารกิจ</label>
+                <input 
+                  type="text" 
+                  value={newGoal.title}
+                  onChange={(e) => setNewGoal({...newGoal, title: e.target.value})}
+                  className="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal"
+                  placeholder="เช่น ดื่มน้ำ 3 ลิตร..."
+                  autoFocus
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="group">
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest group-focus-within:text-indigo-500 transition-colors">หมวดหมู่</label>
+                  <select 
+                    value={newGoal.category}
+                    onChange={(e) => setNewGoal({...newGoal, category: e.target.value})}
+                    className="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-3 text-sm font-bold focus:border-indigo-500 focus:outline-none appearance-none"
+                  >
+                    {Object.keys(CATEGORY_CONFIG).map(k => <option key={k} value={k}>{k}</option>)}
+                  </select>
+                </div>
+                <div className="group">
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest group-focus-within:text-indigo-500 transition-colors">ความถี่</label>
+                  <select 
+                    value={newGoal.frequency}
+                    onChange={(e) => setNewGoal({...newGoal, frequency: e.target.value})}
+                    className="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-3 text-sm font-bold focus:border-indigo-500 focus:outline-none appearance-none"
+                  >
+                    <option value="daily">ทุกวัน</option>
+                    <option value="weekly">รายสัปดาห์</option>
+                    <option value="monthly">รายเดือน</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="group">
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest group-focus-within:text-indigo-500 transition-colors">ระดับความ Impact (1-10)</label>
+                  <div className="flex items-center gap-4 px-1">
+                    <input 
+                      type="range" 
+                      min="1" 
+                      max="10" 
+                      value={newGoal.impact}
+                      onChange={(e) => setNewGoal({...newGoal, impact: e.target.value})}
+                      className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    />
+                    <span className="text-xl font-bold text-indigo-600 w-8 text-center">{newGoal.impact}</span>
+                  </div>
+              </div>
+
+              <div className="group">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest group-focus-within:text-indigo-500 transition-colors">เปิดใช้ตัวจับเวลา</label>
+                    <div 
+                      onClick={() => setNewGoal({...newGoal, hasTimer: !newGoal.hasTimer})}
+                      className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${newGoal.hasTimer ? 'bg-indigo-500' : 'bg-slate-200'}`}
+                    >
+                      <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${newGoal.hasTimer ? 'translate-x-5' : ''}`}></div>
+                    </div>
+                  </div>
+                  
+                  {newGoal.hasTimer && (
+                    <div className="flex items-center gap-3 mt-2 animate-in slide-in-from-top-1 duration-200">
+                      <input 
+                        type="number" 
+                        value={newGoal.timerDuration}
+                        onChange={(e) => setNewGoal({...newGoal, timerDuration: e.target.value})}
+                        className="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold focus:border-indigo-500 focus:outline-none"
+                      />
+                      <span className="text-sm text-slate-500 font-medium">นาที</span>
+                    </div>
+                  )}
+              </div>
+
+              <div className="group">
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest group-focus-within:text-indigo-500 transition-colors">เป้าหมาย (ครั้ง/ปี)</label>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="number" 
+                      value={newGoal.targetDays}
+                      onChange={(e) => setNewGoal({...newGoal, targetDays: e.target.value})}
+                      className="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold focus:border-indigo-500 focus:outline-none"
+                    />
+                    <div className="text-[10px] text-slate-400 leading-tight">
+                       เป้าหมายแนะนำ:<br/>Daily ~365<br/>Weekly ~52
+                    </div>
+                  </div>
+              </div>
+
+              <button 
+                onClick={handleAddGoal}
+                disabled={!newGoal.title}
+                className="w-full bg-slate-900 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black py-4 rounded-xl mt-4 transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-xl"
+              >
+                สร้างภารกิจ <Plus className="w-4 h-4" strokeWidth={3} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingGoal && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-md flex items-center justify-center z-[60] p-4 pb-safe-bottom">
+          <div className="bg-white rounded-[2rem] shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-200 border border-slate-200">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-xl font-black text-slate-900">แก้ไขภารกิจ</h3>
+                <p className="text-xs text-slate-500">ปรับปรุงเป้าหมายของคุณ</p>
+              </div>
+              <button onClick={() => setShowEditModal(false)} className="bg-slate-100 p-2 rounded-full hover:rotate-90 transition-transform"><X className="w-5 h-5 text-slate-500" /></button>
+            </div>
+            
+            <div className="space-y-5">
+              <div className="group">
+                <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest group-focus-within:text-indigo-500 transition-colors">ชื่อภารกิจ</label>
+                <input 
+                  type="text" 
+                  value={editingGoal.title}
+                  onChange={(e) => setEditingGoal({...editingGoal, title: e.target.value})}
+                  className="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold focus:border-indigo-500 focus:outline-none transition-all placeholder:font-normal"
+                  autoFocus
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="group">
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest group-focus-within:text-indigo-500 transition-colors">หมวดหมู่</label>
+                  <select 
+                    value={editingGoal.category}
+                    onChange={(e) => setEditingGoal({...editingGoal, category: e.target.value})}
+                    className="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-3 text-sm font-bold focus:border-indigo-500 focus:outline-none appearance-none"
+                  >
+                    {Object.keys(CATEGORY_CONFIG).map(k => <option key={k} value={k}>{k}</option>)}
+                  </select>
+                </div>
+                <div className="group">
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest group-focus-within:text-indigo-500 transition-colors">ความถี่</label>
+                  <select 
+                    value={editingGoal.frequency}
+                    onChange={(e) => setEditingGoal({...editingGoal, frequency: e.target.value})}
+                    className="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-3 py-3 text-sm font-bold focus:border-indigo-500 focus:outline-none appearance-none"
+                  >
+                    <option value="daily">ทุกวัน</option>
+                    <option value="weekly">รายสัปดาห์</option>
+                    <option value="monthly">รายเดือน</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="group">
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest group-focus-within:text-indigo-500 transition-colors">ระดับความ Impact (1-10)</label>
+                  <div className="flex items-center gap-4 px-1">
+                    <input 
+                      type="range" 
+                      min="1" 
+                      max="10" 
+                      value={editingGoal.impact}
+                      onChange={(e) => setEditingGoal({...editingGoal, impact: e.target.value})}
+                      className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    />
+                    <span className="text-xl font-bold text-indigo-600 w-8 text-center">{editingGoal.impact}</span>
+                  </div>
+              </div>
+
+              <div className="group">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest group-focus-within:text-indigo-500 transition-colors">ตัวจับเวลา</label>
+                    <div 
+                      onClick={() => setEditingGoal({...editingGoal, hasTimer: !editingGoal.hasTimer})}
+                      className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${editingGoal.hasTimer ? 'bg-indigo-500' : 'bg-slate-200'}`}
+                    >
+                      <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${editingGoal.hasTimer ? 'translate-x-5' : ''}`}></div>
+                    </div>
+                  </div>
+                  
+                  {editingGoal.hasTimer && (
+                    <div className="flex items-center gap-3 mt-2 animate-in slide-in-from-top-1 duration-200">
+                      <input 
+                        type="number" 
+                        value={editingGoal.timerDuration}
+                        onChange={(e) => setEditingGoal({...editingGoal, timerDuration: e.target.value})}
+                        className="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold focus:border-indigo-500 focus:outline-none"
+                      />
+                      <span className="text-sm text-slate-500 font-medium">นาที</span>
+                    </div>
+                  )}
+              </div>
+
+              <div className="group">
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase tracking-widest group-focus-within:text-indigo-500 transition-colors">เป้าหมาย (ครั้ง/ปี)</label>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="number" 
+                      value={editingGoal.targetDays}
+                      onChange={(e) => setEditingGoal({...editingGoal, targetDays: e.target.value})}
+                      className="w-full rounded-xl border-2 border-slate-100 bg-slate-50 px-4 py-3 text-sm font-bold focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+              </div>
+
+              <button 
+                onClick={handleUpdateGoal}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl mt-4 transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-xl"
+              >
+                บันทึกการแก้ไข
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLevelModal && (
+        <LevelInfoModal onClose={() => setShowLevelModal(false)} />
+      )}
+      
+      {showFocusModal && activeFocusGoal && (
+        <FocusTimerModal 
+          goal={activeFocusGoal} 
+          onClose={() => setShowFocusModal(false)}
+          onComplete={handleFocusComplete}
+        />
+      )}
+
+      {activeGoalForHistory && (
+        <HistoryCalendar 
+          goal={activeGoalForHistory} 
+          onClose={() => setSelectedGoalId(null)}
+          onToggleDate={(id, date) => {
+             setResolutions(resolutions.map(res => {
+               if (res.id === id) {
+                 const exists = res.completedDates.includes(date);
+                 return {
+                   ...res,
+                   completedDates: exists ? res.completedDates.filter(d => d !== date) : [...res.completedDates, date]
+                 };
+               }
+               return res;
+             }));
+          }}
+        />
+      )}
+
+    </div>
+  );
+}
